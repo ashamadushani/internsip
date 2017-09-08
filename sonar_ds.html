@@ -1,0 +1,377 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Sonar Issues</title>
+    <script src="Chartjs/Chart.bundle.js"></script>
+    <script src="Chartjs/samples/utils.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="code/highcharts/highcharts.js"></script>
+    <script src="code/highcharts/modules/heatmap.js"></script>
+    
+    <style>
+    canvas {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+    </style>
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-8"  style="padding-top:1px;">
+            <select id="way" onchange="getWay(this)" class="form-control" style="width: 20%">
+                <option value="1" selected="selected">Type</option>
+                <option value="2">Severity</option>
+            </select>
+
+            <div style="width: 93%">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+        <div class="col-xs-4"  style="padding-top:1px;">  
+            <div >
+            <select id="product" onchange="getProduct(this)" class="form-control" style="width: 50%"></select>
+            </div>
+
+            <div id="canvas-holder" style="width:65%;padding-left:50px;">
+                <canvas id="chart-area"></canvas>
+            </div>
+        </div>
+    </div> 
+    <div class="row">
+        <div class="col-xs-8">Trend Line will come here</div>
+        <div class="col-xs-4">
+            <div id="container" style="margin: 0 auto"></div>
+        </div>
+    </div> 
+</div> 
+    
+    <script>
+
+        
+        var components=[];
+         
+        var issues=[];
+        $.ajax({
+            url:"https://10.100.4.8:8243/si/v1.0.0/getAllIssues",
+            beforeSend: function( xhr ){
+                xhr.setRequestHeader('Accept','application/json');
+                xhr.setRequestHeader('Authorization','Bearer e05164bb-0572-31bf-80f8-9bc9b7ff93c8');
+        
+            },
+            async:false,
+
+            success: function(data){
+        
+            products=data.products;
+            components=data.components;
+            for (var i = 0; i < products.length; i++) {
+                var issue=[];
+                var comps=[];
+                var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
+                var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
+                var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
+                for (var j = 0; j < components.length; j++) {
+                    if (components[j].product==products[i]){
+
+                        bb=bb+components[j].bb;
+                        cb=cb+components[j].cb;
+                        mab=mab+components[j].mab;
+                        mib=mib+components[j].mib;
+                        ib=ib+components[j].ib;
+                        bc=bc+components[j].bc;
+                        cc=cc+components[j].cc;
+                        mac=mac+components[j].mac;
+                        mic=mic+components[j].mic;
+                        ic=ic+components[j].ic;
+                        bv=bv+components[j].bv;
+                        cv=cv+components[j].cv;
+                        mav=mav+components[j].mav;
+                        miv=miv+components[j].miv;
+                        iv=iv+components[j].iv;
+                        comps.push(components[j]);
+                            
+                    }
+                        
+                }
+                    
+                issue=[products[i],bb,cb,mab,mib,ib,bc,cc,mac,mic,ic,bv,cv,mav,miv,iv,comps];
+                issues.push(issue);
+            }
+            console.log(issues);
+            }
+                
+        })
+
+        var barChartData = {
+            labels: products,
+            datasets: [{
+                label: 'BUG',
+                backgroundColor: window.chartColors.red,
+                data: []
+            }, {
+                label: 'CODE SMELL',
+                backgroundColor: window.chartColors.blue,
+                data: []
+            }, {
+                label: 'VULNERABILITY',
+                backgroundColor: window.chartColors.yellow,
+                data: []
+            }],
+            options: {
+                responsive: true
+            }
+
+        };
+        var pieCharData={
+            type:'pie',
+            data: {
+            datasets: [{
+                data: [],
+                backgroundColor: [],
+                
+            }],
+            labels: []
+        },
+        options: {
+            responsive: true
+        }
+        };
+
+
+        var heatmap={
+
+            chart: {
+                type: 'heatmap',
+                marginTop: 40,
+                marginBottom: 80,
+                plotBorderWidth: 1
+            },
+            title: {
+                text: 'Type and Severity'
+            },
+            xAxis: {
+                categories: ['BUG', 'CODE SMELL', 'VULNERABILITY']
+            },
+            yAxis: {
+                categories: ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'INFO'],
+                title: null
+            },
+            colorAxis: {
+                min: 0,
+                minColor: '#FFFFFF',
+                maxColor: Highcharts.getOptions().colors[3]
+            },
+            legend: {
+                align: 'right',
+                layout: 'vertical',
+                margin: 0,
+                verticalAlign: 'top',
+                y: 25,
+                symbolHeight: 280
+            },
+            tooltip: {
+                formatter: function () {
+                    return this.point.value + '</b><br><b>' + this.series.yAxis.categories[this.point.y] + '</b>  <b>' + this.series.xAxis.categories[this.point.x] + '</b>';
+                }
+            },
+            series: [{
+                name: 'Severity per type',
+                borderWidth: 1,
+                data: [[0, 0, issues[0][1]], [0, 1, issues[0][2]], [0, 2, issues[0][3]], [0, 3, issues[0][4]], [0, 4, issues[0][5]], [1, 0, issues[0][6]], [1, 1, issues[0][7]], [1, 2, issues[0][8]], [1, 3, issues[0][9]], [1, 4, issues[0][10]], [2, 0, issues[0][11]], [2, 1, issues[0][12]], [2, 2, issues[0][13]], [2, 3, issues[0][14]], [2, 4, issues[0][15]]],
+                dataLabels: {
+                    enabled: true,
+                    color: '#000000'
+                }
+            }],
+            
+            credits:{
+              enabled:false
+            } 
+        };
+        
+        Highcharts.chart('container',heatmap);
+
+        window.onload = function() {
+            var x = document.getElementById("product");
+            for (var i = 0; i < products.length; i++) {
+                var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
+                var val2= issues[i][6]+issues[i][7]+issues[i][8]+issues[i][9]+issues[i][10];
+                var val3= issues[i][11]+issues[i][12]+issues[i][13]+issues[i][14]+issues[i][15];
+                barChartData.datasets[0].data.push(val1);
+                barChartData.datasets[1].data.push(val2);
+                barChartData.datasets[2].data.push(val3);
+
+                var option = document.createElement("option");
+                option.text = products[i];
+                option.value=i;
+                x.add(option);
+
+
+            }
+            
+            var labelarray=[];
+            var totals=[];
+            var colors = [];
+            for (var i = 0; i < issues[0][16].length; i++) {
+                labelarray.push(issues[0][16][i].pk);
+                pieCharData.data.labels=labelarray;
+                var tot=issues[0][16][i].bb+issues[0][16][i].cb+issues[0][16][i].mab+issues[0][16][i].mib+issues[0][16][i].ib+issues[0][16][i].bc+issues[0][16][i].cc+issues[0][16][i].mac+issues[0][16][i].mic+issues[0][16][i].ic+issues[0][16][i].bv+issues[0][16][i].cv+issues[0][16][i].mav+issues[0][16][i].miv+issues[0][16][i].iv;
+                totals.push(tot);
+                pieCharData.data.datasets[0].data=totals;
+            }
+            
+            while (colors.length < issues[0][16].length) {
+                do {
+                    var color = Math.floor((Math.random()*1000000)+1);
+                } while (colors.indexOf(color) >= 0);
+                colors.push("#" + ("000000" + color.toString(16)).slice(-6));
+            }
+            
+            pieCharData.data.datasets[0].backgroundColor=colors;
+            
+
+            var ctx = document.getElementById("canvas").getContext("2d");
+            window.myBar = new Chart(ctx, {
+                type: 'bar',
+                data: barChartData,
+                options: {
+                    title:{
+                        display:true,
+                        text:"Sonar Issues"
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    responsive: true,
+                    scales: {
+                        xAxes: [{
+                            stacked: true,
+                        }],
+                        yAxes: [{
+                            stacked: true
+                        }]
+                    }
+                }
+            });
+
+            var ctx1 = document.getElementById("chart-area").getContext("2d");
+            window.myPie = new Chart(ctx1, pieCharData);
+
+        };
+
+        function getWay(selectObject) {
+            var value = selectObject.value;  
+            if(value==1){
+                barChartData.datasets=[{
+                label: 'BUG',
+                backgroundColor: window.chartColors.red,
+                data: []
+            }, {
+                label: 'CODE SMELL',
+                backgroundColor: window.chartColors.blue,
+                data: []
+            }, {
+                label: 'VULNERABILITY',
+                backgroundColor: window.chartColors.yellow,
+                data: []
+            }]
+
+            for (var i = 0; i < products.length; i++) {
+                var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
+                var val2= issues[i][6]+issues[i][7]+issues[i][8]+issues[i][9]+issues[i][10];
+                var val3= issues[i][11]+issues[i][12]+issues[i][13]+issues[i][14]+issues[i][15];
+                barChartData.datasets[0].data.push(val1);
+                barChartData.datasets[1].data.push(val2);
+                barChartData.datasets[2].data.push(val3);            
+             }
+            
+            }else if(value==2){
+                barChartData.datasets=[{
+                label: 'BLOCKER',
+                backgroundColor: window.chartColors.red,
+                data: []
+            }, {
+                label: 'CRITICAL',
+                backgroundColor: window.chartColors.blue,
+                data: []
+            }, {
+                label: 'MAJOR',
+                backgroundColor: window.chartColors.yellow,
+                data: []
+            }, {
+                label: 'MINOR',
+                backgroundColor: window.chartColors.green,
+                data: []
+            }, {
+                label: 'INFO',
+                backgroundColor: window.chartColors.orange,
+                data: []
+            }];
+                for (var i = 0; i < products.length; i++) {
+                var val1= issues[i][1]+issues[i][6]+issues[i][11];
+                var val2= issues[i][2]+issues[i][7]+issues[i][12];
+                var val3= issues[i][3]+issues[i][8]+issues[i][13];
+                var val4= issues[i][4]+issues[i][9]+issues[i][14];
+                var val5= issues[i][5]+issues[i][10]+issues[i][15];
+                barChartData.datasets[0].data.push(val1);
+                barChartData.datasets[1].data.push(val2);
+                barChartData.datasets[2].data.push(val3);
+                barChartData.datasets[3].data.push(val4);
+                barChartData.datasets[4].data.push(val5);             
+             }
+            }
+            window.myBar.update();
+            
+        }
+
+        function getProduct(selectObject){
+            var value=selectObject.value;
+            var labelarray=[];
+            var totals=[];
+            var colors = [];
+            for (var i = 0; i < issues[value][16].length; i++) {
+                labelarray.push(issues[value][16][i].pk);
+                pieCharData.data.labels=labelarray;
+                var tot=issues[value][16][i].bb+issues[value][16][i].cb+issues[value][16][i].mab+issues[value][16][i].mib+issues[value][16][i].ib+issues[value][16][i].bc+issues[value][16][i].cc+issues[value][16][i].mac+issues[value][16][i].mic+issues[value][16][i].ic+issues[value][16][i].bv+issues[value][16][i].cv+issues[value][16][i].mav+issues[value][16][i].miv+issues[value][16][i].iv;
+                totals.push(tot);
+                pieCharData.data.datasets[0].data=totals;
+                for (var j = 0; j < 15; j++) {
+                    heatmap.series[0].data[j][2]=issues[value][j+1];
+                    console.log(heatmap.series[0].data[j]);
+                }
+
+            }
+            
+            while (colors.length < issues[value][16].length) {
+                do {
+                    var color = Math.floor((Math.random()*1000000)+1);
+                } while (colors.indexOf(color) >= 0);
+                colors.push("#" + ("000000" + color.toString(16)).slice(-6));
+            }
+            pieCharData.data.datasets[0].backgroundColor=colors;
+            window.myPie.update();
+            Highcharts.chart('container',heatmap);
+        }
+        // document.getElementById('way').addEventListener('click', function() {
+        //     barChartData.datasets.forEach(function(dataset, i) {
+        //         dataset.data = dataset.data.map(function() {
+        //             return randomScalingFactor();
+        //         });
+        //     });
+        //     window.myBar.update();
+        // });
+
+
+    </script>
+
+</body>
+
+</html>

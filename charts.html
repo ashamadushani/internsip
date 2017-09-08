@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  
+  <head>
+ 
+</head>
+<script src="code/highcharts/highcharts.js"></script>
+<script src="code/highcharts/modules/heatmap.js"></script>
+
+<body>
+  
+  <div id="container" style="height: 400px; min-width: 310px; max-width: 800px; margin: 0 auto"></div>
+  <script>
+   Highcharts.chart('container', {
+
+    chart: {
+        type: 'heatmap',
+        marginTop: 40,
+        marginBottom: 80,
+        plotBorderWidth: 1
+    },
+
+
+    title: {
+        text: 'Type and Severity'
+    },
+
+    xAxis: {
+        categories: ['BUG', 'CODE SMELL', 'VULNERABILITY']
+    },
+
+    yAxis: {
+        categories: ['BLOCKER', 'CRITICAL', 'INFO', 'MAJOR', 'MINOR'],
+        title: null
+    },
+
+    colorAxis: {
+        min: 0,
+        minColor: '#FFFFFF',
+        maxColor: Highcharts.getOptions().colors[0]
+    },
+
+    legend: {
+        align: 'right',
+        layout: 'vertical',
+        margin: 0,
+        verticalAlign: 'top',
+        y: 25,
+        symbolHeight: 280
+    },
+
+    tooltip: {
+        formatter: function () {
+            return this.point.value + '</b><br><b>' + this.series.yAxis.categories[this.point.y] + '</b>  <b>' + this.series.xAxis.categories[this.point.x] + '</b>';
+        }
+    },
+
+    series: [{
+        name: 'Sales per employee',
+        borderWidth: 1,
+        data: [[0, 0, 10], [0, 1, 19], [0, 2, 8], [0, 3, 24], [0, 4, 67], [1, 0, 92], [1, 1, 58], [1, 2, 78], [1, 3, 117], [1, 4, 48], [2, 0, 35], [2, 1, 15], [2, 2, 123], [2, 3, 64], [2, 4, 52]],
+        dataLabels: {
+            enabled: true,
+            color: '#000000'
+        }
+    }],
+    
+    credits:{
+      enabled:false
+    }
+
+    
+});
+  </script>
+</body>
+</html>
+  
+  

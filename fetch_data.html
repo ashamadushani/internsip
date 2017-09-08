@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+$(function(){
+    $.ajax({
+    url:"https://10.100.4.8:8243/si/v1.0.0/getAllIssues",
+    beforeSend: function( xhr ){
+        xhr.setRequestHeader('Accept','application/json');
+        xhr.setRequestHeader('Authorization','Bearer 8582b5bc-968c-3c8c-a9da-c06f2ab22245');
+        
+    },
+    async:false,
+    success: function(data){
+        
+        console.log(data);
+        document.getElementById("dateandtotal").innerHTML=data.products;
+            
+    }
+
+})
+})
+</script>
+<body>
+<div id="dateandtotal" style="">hello</div>
+</body>
+</html>
