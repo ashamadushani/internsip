@@ -23,41 +23,68 @@
 
 <body>
 <div class="container-fluid">
+    
     <div class="row">
+        
         <div class="col-xs-8"  style="padding-top:1px;">
+            <div class="row" style="padding-top:1px;padding-bottom: 50px">
+                <div class="col-xs-4">
+                    <h4>Area</h4>
+                    <select id="area" onchange="getArea(this)" class="form-control" style="">
+                        <option value="1" selected="selected">All</option>
+                        
+                    </select>
+                </div>
+
+                <div class="col-xs-4">
+                    <h4>Product</h4>
+                    <select id="product" onchange="getProduct(this)" class="form-control" style="" disabled="true">
+                        <option value="1" selected="selected">All</option>
+                    </select>
+                </div>
+                <div class="col-xs-4">
+                    <h4>Version</h4>
+                    <select id="version" onchange="getVersion(this)" class="form-control" style="" disabled="true">
+                        <option value="1" selected="selected">All</option>
+                        <option value="2">1.0.0</option>
+                    </select>
+                </div>
+            </div>
             <select id="way" onchange="getWay(this)" class="form-control" style="width: 20%">
                 <option value="1" selected="selected">Type</option>
                 <option value="2">Severity</option>
             </select>
 
-            <div style="width: 93%">
+            <div style="width: 94%">
                 <canvas id="canvas"></canvas>
             </div>
         </div>
-        <div class="col-xs-4"  style="padding-top:1px;">  
-            <div >
-            <select id="product" onchange="getProduct(this)" class="form-control" style="width: 50%"></select>
-            </div>
-
-            <div id="canvas-holder" style="width:65%;padding-left:50px;">
-                <canvas id="chart-area"></canvas>
-            </div>
+        <div class="col-xs-4"  style="padding-top:150px;">  
+            <div id="container" style="margin: 0 auto"></div>
         </div>
     </div> 
     <div class="row">
         <div class="col-xs-8">Trend Line will come here</div>
         <div class="col-xs-4">
-            <div id="container" style="margin: 0 auto"></div>
+            
         </div>
     </div> 
 </div> 
     
     <script>
-
+        var selectedArea="";
+        var onclickProduct;
         
+        var areas=[];
+        var pns=[];
+        var products=[];
         var components=[];
-         
+
         var issues=[];
+        var componentIssues=[];
+        var productIssues=[];
+        var productComponent=[];
+
         $.ajax({
             url:"https://10.100.4.8:8243/si/v1.0.0/getAllIssues",
             beforeSend: function( xhr ){
@@ -68,49 +95,115 @@
             async:false,
 
             success: function(data){
-        
-            products=data.products;
-            components=data.components;
-            for (var i = 0; i < products.length; i++) {
-                var issue=[];
-                var comps=[];
-                var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
-                var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
-                var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
-                for (var j = 0; j < components.length; j++) {
-                    if (components[j].product==products[i]){
-
-                        bb=bb+components[j].bb;
-                        cb=cb+components[j].cb;
-                        mab=mab+components[j].mab;
-                        mib=mib+components[j].mib;
-                        ib=ib+components[j].ib;
-                        bc=bc+components[j].bc;
-                        cc=cc+components[j].cc;
-                        mac=mac+components[j].mac;
-                        mic=mic+components[j].mic;
-                        ic=ic+components[j].ic;
-                        bv=bv+components[j].bv;
-                        cv=cv+components[j].cv;
-                        mav=mav+components[j].mav;
-                        miv=miv+components[j].miv;
-                        iv=iv+components[j].iv;
-                        comps.push(components[j]);
-                            
-                    }
-                        
+            
+                areas=data.areas
+                products=data.products;
+                components=data.components;
+                pns=data.pns;
+                for (var i = 0; i < areas.length; i++) {
+                    var pbb=0;var pcb=0; var pmab=0; var pmib=0; var pib=0;
+                    var pbc=0; var pcc=0; var pmac=0; var pmic=0; var pic=0;
+                    var pbv=0; var pcv=0; var pmav=0; var pmiv=0; var piv=0;
+                    var pn="";
+                    for (var j = 0; j < pns[i].length; j++) {
+                        if(products[i].length>0){
+                            pbb=products[i][j].bb;
+                            pcb=products[i][j].cb;
+                            pmab=products[i][j].mab;
+                            pmib=products[i][j].mib;
+                            pib=products[i][j].ib;
+                            pbc=products[i][j].bc;
+                            pcc=products[i][j].cc;
+                            pmac=products[i][j].mac;
+                            pmic=products[i][j].mic;
+                            pic=products[i][j].ic;
+                            pbv=products[i][j].bv;
+                            pcv=products[i][j].cv;
+                            pmav=products[i][j].mav;
+                            pmiv=products[i][j].miv;
+                            piv=products[i][j].iv;
+                        }
+                        pn=pns[i][j];
+                        var pi=[areas[i],pn,pbb,pcb,pmab,pmib,pib,pbc,pcc,pmac,pmic,pic,pbv,pcv,pmav,pmiv,piv];
+                        productIssues.push(pi);                  
+                    }  
                 }
+                
+                for (var i = 0; i < productIssues.length; i++) {
+                    var issue=[];
+                    var comps=[];
+                    var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
+                    var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
+                    var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
+                    for (var j = 0; j < components.length; j++) {
+                        if (components[j].product==productIssues[i][1]){
+                            bb=bb+components[j].bb;
+                            cb=cb+components[j].cb;
+                            mab=mab+components[j].mab;
+                            mib=mib+components[j].mib;
+                            ib=ib+components[j].ib;
+                            bc=bc+components[j].bc;
+                            cc=cc+components[j].cc;
+                            mac=mac+components[j].mac;
+                            mic=mic+components[j].mic;
+                            ic=ic+components[j].ic;
+                            bv=bv+components[j].bv;
+                            cv=cv+components[j].cv;
+                            mav=mav+components[j].mav;
+                            miv=miv+components[j].miv;
+                            iv=iv+components[j].iv;
+                            comps.push(components[j]);
+
+                        }
+                    }
+                    bb=bb+productIssues[i][2]; cb=cb+productIssues[i][3]; mab=mab+productIssues[i][4]; mib=mib+productIssues[i][5]; ib=ib+productIssues[i][6];
+                    bc=bc+productIssues[i][7]; cc=cc+productIssues[i][8]; mac=mac+productIssues[i][9]; mic=mic+productIssues[i][10]; ic=ic+productIssues[i][11];
+                    bv=bv+productIssues[i][12]; cv=cv+productIssues[i][13]; mav=mav+productIssues[i][14]; miv=miv+productIssues[i][15]; iv=iv+productIssues[i][16];
+                    comps.push(productIssues[i]);
+                    issue=[productIssues[i][0],productIssues[i][1],bb,cb,mab,mib,ib,bc,cc,mac,mic,ic,bv,cv,mav,miv,iv,comps];
+                    productComponent.push(issue)
                     
-                issue=[products[i],bb,cb,mab,mib,ib,bc,cc,mac,mic,ic,bv,cv,mav,miv,iv,comps];
-                issues.push(issue);
-            }
-            console.log(issues);
+                }
+                
+
+                for (var i = 0; i < areas.length; i++) {
+                    var issue=[];
+                    var comps=[];
+                    var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
+                    var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
+                    var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
+
+                    for (var j = 0; j < productComponent.length; j++) {
+                        if (productComponent[j][0]==areas[i]){
+                            bb=bb+productComponent[j][2];
+                            cb=cb+productComponent[j][3];
+                            mab=mab+productComponent[j][4];
+                            mib=mib+productComponent[j][5];
+                            ib=ib+productComponent[j][6];
+                            bc=bc+productComponent[j][7];
+                            cc=cc+productComponent[j][8];
+                            mac=mac+productComponent[j][9];
+                            mic=mic+productComponent[j][10];
+                            ic=ic+productComponent[j][11];
+                            bv=bv+productComponent[j][12];
+                            cv=cv+productComponent[j][13];
+                            mav=mav+productComponent[j][14];
+                            miv=miv+productComponent[j][15];
+                            iv=iv+productComponent[j][16];
+                            comps.push(productComponent[j]);
+                        }
+                    }
+                    issue=[areas[i],bb,cb,mab,mib,ib,bc,cc,mac,mic,ic,bv,cv,mav,miv,iv,comps];
+                    issues.push(issue);
+                }
+                
+                
             }
                 
         })
 
         var barChartData = {
-            labels: products,
+            labels: areas,
             datasets: [{
                 label: 'BUG',
                 backgroundColor: window.chartColors.red,
@@ -124,26 +217,8 @@
                 backgroundColor: window.chartColors.yellow,
                 data: []
             }],
-            options: {
-                responsive: true
-            }
-
+            
         };
-        var pieCharData={
-            type:'pie',
-            data: {
-            datasets: [{
-                data: [],
-                backgroundColor: [],
-                
-            }],
-            labels: []
-        },
-        options: {
-            responsive: true
-        }
-        };
-
 
         var heatmap={
 
@@ -166,7 +241,8 @@
             colorAxis: {
                 min: 0,
                 minColor: '#FFFFFF',
-                maxColor: Highcharts.getOptions().colors[3]
+                maxColor: '#F42727',
+                //Highcharts.getOptions().colors[8]
             },
             legend: {
                 align: 'right',
@@ -200,7 +276,8 @@
 
         window.onload = function() {
             var x = document.getElementById("product");
-            for (var i = 0; i < products.length; i++) {
+            var y = document.getElementById("area");
+            for (var i = 0; i < areas.length; i++) {
                 var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
                 var val2= issues[i][6]+issues[i][7]+issues[i][8]+issues[i][9]+issues[i][10];
                 var val3= issues[i][11]+issues[i][12]+issues[i][13]+issues[i][14]+issues[i][15];
@@ -209,34 +286,12 @@
                 barChartData.datasets[2].data.push(val3);
 
                 var option = document.createElement("option");
-                option.text = products[i];
-                option.value=i;
-                x.add(option);
-
-
+                option.text = areas[i];
+                option.value=i+2;
+                y.add(option);
+            
             }
             
-            var labelarray=[];
-            var totals=[];
-            var colors = [];
-            for (var i = 0; i < issues[0][16].length; i++) {
-                labelarray.push(issues[0][16][i].pk);
-                pieCharData.data.labels=labelarray;
-                var tot=issues[0][16][i].bb+issues[0][16][i].cb+issues[0][16][i].mab+issues[0][16][i].mib+issues[0][16][i].ib+issues[0][16][i].bc+issues[0][16][i].cc+issues[0][16][i].mac+issues[0][16][i].mic+issues[0][16][i].ic+issues[0][16][i].bv+issues[0][16][i].cv+issues[0][16][i].mav+issues[0][16][i].miv+issues[0][16][i].iv;
-                totals.push(tot);
-                pieCharData.data.datasets[0].data=totals;
-            }
-            
-            while (colors.length < issues[0][16].length) {
-                do {
-                    var color = Math.floor((Math.random()*1000000)+1);
-                } while (colors.indexOf(color) >= 0);
-                colors.push("#" + ("000000" + color.toString(16)).slice(-6));
-            }
-            
-            pieCharData.data.datasets[0].backgroundColor=colors;
-            
-
             var ctx = document.getElementById("canvas").getContext("2d");
             window.myBar = new Chart(ctx, {
                 type: 'bar',
@@ -262,10 +317,45 @@
                 }
             });
 
-            var ctx1 = document.getElementById("chart-area").getContext("2d");
-            window.myPie = new Chart(ctx1, pieCharData);
-
         };
+
+        function getArea(selectObject){
+            var area = selectObject.value;
+            if(area>1){
+                selectedArea = areas[area-2];
+                var ai=issues[area-2];
+                console.log(ai);
+                document.getElementById("product").disabled=false;
+            }else{
+                document.getElementById("product").value=1;
+                document.getElementById("product").disabled=true;
+            }  
+            
+        }
+
+        function getProduct(selectObject){
+            var value=selectObject.value;
+            onclickProduct=value;
+            var labelarray=[];
+            var totals=[];
+            var colors = [];
+            for (var i = 0; i < issues[value][16].length; i++) {
+                for (var j = 0; j < 15; j++) {
+                    heatmap.series[0].data[j][2]=issues[value][j+1];
+                    
+                }
+
+            }
+
+            Highcharts.chart('container',heatmap);
+        }
+
+        function getVersion(selectObject){
+            var version = selectObject.value;
+            if(version==1){
+                console.log(version);
+            }
+        }
 
         function getWay(selectObject) {
             var value = selectObject.value;  
@@ -332,43 +422,31 @@
             
         }
 
-        function getProduct(selectObject){
-            var value=selectObject.value;
+        canvas.onclick = function(evt){
+            var activePoints = myBar.getElementsAtEvent(evt);
+
+            
+            var product=activePoints[0]._model.label;
+            onclickProduct=product;
+            var value=0;
+            for (var n = 0; n < products.length; n++) {
+                if(products[n]==product){
+                    value=n;
+                }
+            }
             var labelarray=[];
             var totals=[];
             var colors = [];
             for (var i = 0; i < issues[value][16].length; i++) {
-                labelarray.push(issues[value][16][i].pk);
-                pieCharData.data.labels=labelarray;
-                var tot=issues[value][16][i].bb+issues[value][16][i].cb+issues[value][16][i].mab+issues[value][16][i].mib+issues[value][16][i].ib+issues[value][16][i].bc+issues[value][16][i].cc+issues[value][16][i].mac+issues[value][16][i].mic+issues[value][16][i].ic+issues[value][16][i].bv+issues[value][16][i].cv+issues[value][16][i].mav+issues[value][16][i].miv+issues[value][16][i].iv;
-                totals.push(tot);
-                pieCharData.data.datasets[0].data=totals;
                 for (var j = 0; j < 15; j++) {
                     heatmap.series[0].data[j][2]=issues[value][j+1];
-                    console.log(heatmap.series[0].data[j]);
                 }
 
             }
-            
-            while (colors.length < issues[value][16].length) {
-                do {
-                    var color = Math.floor((Math.random()*1000000)+1);
-                } while (colors.indexOf(color) >= 0);
-                colors.push("#" + ("000000" + color.toString(16)).slice(-6));
-            }
-            pieCharData.data.datasets[0].backgroundColor=colors;
-            window.myPie.update();
             Highcharts.chart('container',heatmap);
-        }
-        // document.getElementById('way').addEventListener('click', function() {
-        //     barChartData.datasets.forEach(function(dataset, i) {
-        //         dataset.data = dataset.data.map(function() {
-        //             return randomScalingFactor();
-        //         });
-        //     });
-        //     window.myBar.update();
-        // });
 
+            
+        };        
 
     </script>
 
