@@ -72,8 +72,12 @@
 </div> 
     
     <script>
-        var selectedArea="";
+        var selectedProduct="";
+        var selectedAreaNo;
+        var selectedWay=1;
         var onclickProduct;
+        var tobeSelectedProducts;
+        var selectedProduct;
         
         var areas=[];
         var pns=[];
@@ -101,7 +105,7 @@
                 components=data.components;
                 pns=data.pns;
                 for (var i = 0; i < areas.length; i++) {
-                    var pbb=0;var pcb=0; var pmab=0; var pmib=0; var pib=0;
+                    var pbb=0; var pcb=0; var pmab=0; var pmib=0; var pib=0;
                     var pbc=0; var pcc=0; var pmac=0; var pmic=0; var pic=0;
                     var pbv=0; var pcv=0; var pmav=0; var pmiv=0; var piv=0;
                     var pn="";
@@ -132,7 +136,7 @@
                 for (var i = 0; i < productIssues.length; i++) {
                     var issue=[];
                     var comps=[];
-                    var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
+                    var bb=0; var cb=0; var mab=0; var mib=0; var ib=0;
                     var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
                     var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
                     for (var j = 0; j < components.length; j++) {
@@ -169,7 +173,7 @@
                 for (var i = 0; i < areas.length; i++) {
                     var issue=[];
                     var comps=[];
-                    var bb=0;var cb=0; var mab=0; var mib=0; var ib=0;
+                    var bb=0; var cb=0; var mab=0; var mib=0; var ib=0;
                     var bc=0; var cc=0; var mac=0; var mic=0; var ic=0;
                     var bv=0; var cv=0; var mav=0; var miv=0; var iv=0;
 
@@ -201,7 +205,8 @@
             }
                 
         })
-
+        
+        var tit="Sonar Issues";
         var barChartData = {
             labels: areas,
             datasets: [{
@@ -250,7 +255,7 @@
                 margin: 0,
                 verticalAlign: 'top',
                 y: 25,
-                symbolHeight: 280
+                symbolHeight: 280,
             },
             tooltip: {
                 formatter: function () {
@@ -260,7 +265,7 @@
             series: [{
                 name: 'Severity per type',
                 borderWidth: 1,
-                data: [[0, 0, issues[0][1]], [0, 1, issues[0][2]], [0, 2, issues[0][3]], [0, 3, issues[0][4]], [0, 4, issues[0][5]], [1, 0, issues[0][6]], [1, 1, issues[0][7]], [1, 2, issues[0][8]], [1, 3, issues[0][9]], [1, 4, issues[0][10]], [2, 0, issues[0][11]], [2, 1, issues[0][12]], [2, 2, issues[0][13]], [2, 3, issues[0][14]], [2, 4, issues[0][15]]],
+                data: [[0, 0, 0], [0, 1, 0], [0, 2,0], [0, 3, 0], [0, 4, 0], [1, 0, 0], [1, 1, 0], [1, 2, 0], [1, 3, 0], [1, 4, 0], [2, 0, 0], [2, 1, 0], [2, 2, 0], [2, 3, 0], [2, 4, 0]],
                 dataLabels: {
                     enabled: true,
                     color: '#000000'
@@ -272,10 +277,8 @@
             } 
         };
         
-        Highcharts.chart('container',heatmap);
 
         window.onload = function() {
-            var x = document.getElementById("product");
             var y = document.getElementById("area");
             for (var i = 0; i < areas.length; i++) {
                 var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
@@ -291,6 +294,16 @@
                 y.add(option);
             
             }
+            for (var i = 1; i < 16; i++) {
+                var total=0;
+                for (var j = 0; j < products.length; j++) {
+                    total=total+issues[j][i];
+                }
+                heatmap.series[0].data[i-1][2]=total;
+                    
+            }
+
+                Highcharts.chart('container',heatmap);
             
             var ctx = document.getElementById("canvas").getContext("2d");
             window.myBar = new Chart(ctx, {
@@ -299,7 +312,8 @@
                 options: {
                     title:{
                         display:true,
-                        text:"Sonar Issues"
+                        text:tit,
+                        fontSize:20
                     },
                     tooltips: {
                         mode: 'index',
@@ -313,8 +327,14 @@
                         yAxes: [{
                             stacked: true
                         }]
-                    }
-                }
+                    },
+                    beforeUpdate: function() {
+                        var chartOpts = this.chart.options; 
+                        if (chartOpts && chartOpts.title) {
+                            this.options = helpers.configMerge(Chart.defaults.global.title, chartOpts.title);
+                        }
+                    },
+                },
             });
 
         };
@@ -322,11 +342,167 @@
         function getArea(selectObject){
             var area = selectObject.value;
             if(area>1){
-                selectedArea = areas[area-2];
-                var ai=issues[area-2];
+                selectedAreaNo=area-2;
+                var selectedArea = areas[area-2];
+                var ai=pns[area-2];
+                barChartData.labels=ai;
+                tobeSelectedProducts=ai;
+                var x = document.getElementById("product");
+                $('#product option[value!="1"]').remove();
+                for (var i = 0; i < ai.length; i++) {
+                    var option = document.createElement("option");
+                    option.text = ai[i];
+                    option.value=i+2;
+                    x.add(option);   
+                }
+                if(selectedWay==1){
+                    tit="Sonar Issues - Product Level - Type Wise";
+                    barChartData.datasets=[{
+                        label: 'BUG',
+                        backgroundColor: window.chartColors.red,
+                        data: []
+                    }, {
+                        label: 'CODE SMELL',
+                        backgroundColor: window.chartColors.blue,
+                        data: []
+                    }, {
+                        label: 'VULNERABILITY',
+                        backgroundColor: window.chartColors.yellow,
+                        data: []
+                    }];
+                    for (var i = 0; i < productComponent.length; i++) {
+                        if(productComponent[i][0]==selectedArea){
+                            var val1= productComponent[i][2]+productComponent[i][3]+productComponent[i][4]+productComponent[i][5]+productComponent[i][6];
+                            var val2= productComponent[i][7]+productComponent[i][8]+productComponent[i][9]+productComponent[i][10]+productComponent[i][11];
+                            var val3= productComponent[i][12]+productComponent[i][13]+productComponent[i][14]+productComponent[i][15]+productComponent[i][16];
+                            barChartData.datasets[0].data.push(val1);
+                            barChartData.datasets[1].data.push(val2);
+                            barChartData.datasets[2].data.push(val3);   
+                        }
+                    }
+                    
+                }else if(selectedWay==2){
+                    tit="Sonar Issues - Product Level - Severity Wise";
+                    barChartData.datasets=[{
+                    label: 'BLOCKER',
+                    backgroundColor: window.chartColors.red,
+                    data: []
+                    }, {
+                        label: 'CRITICAL',
+                        backgroundColor: window.chartColors.blue,
+                        data: []
+                    }, {
+                        label: 'MAJOR',
+                        backgroundColor: window.chartColors.yellow,
+                        data: []
+                    }, {
+                        label: 'MINOR',
+                        backgroundColor: window.chartColors.green,
+                        data: []
+                    }, {
+                        label: 'INFO',
+                        backgroundColor: window.chartColors.orange,
+                        data: []
+                    }];
+                    for (var i = 0; i < productComponent.length; i++) {
+                        if(productComponent[i][0]==selectedArea){
+                            var val1= productComponent[i][2]+productComponent[i][7]+productComponent[i][12];
+                            var val2= productComponent[i][3]+productComponent[i][8]+productComponent[i][13];
+                            var val3= productComponent[i][4]+productComponent[i][9]+productComponent[i][14];
+                            var val4= productComponent[i][5]+productComponent[i][10]+productComponent[i][15];
+                            var val5= productComponent[i][6]+productComponent[i][11]+productComponent[i][16];
+                            barChartData.datasets[0].data.push(val1);
+                            barChartData.datasets[1].data.push(val2);
+                            barChartData.datasets[2].data.push(val3);
+                            barChartData.datasets[3].data.push(val4);
+                            barChartData.datasets[4].data.push(val5);
+                        }             
+                    }
+
+                }
                 console.log(ai);
+                for (var j = 0; j < 15; j++) {
+                    heatmap.series[0].data[j][2]=issues[area-2][j+1];
+                        
+                }
+                Highcharts.chart('container',heatmap);
                 document.getElementById("product").disabled=false;
+                window.myBar.update();
             }else{
+                    if(selectedWay==1){
+                            tit="Sonar Issues - Product Level - Type Wise";
+                            barChartData.labels=areas; 
+                            barChartData.datasets=[{
+                            label: 'BUG',
+                            backgroundColor: window.chartColors.red,
+                            data: []
+                        }, {
+                            label: 'CODE SMELL',
+                            backgroundColor: window.chartColors.blue,
+                            data: []
+                        }, {
+                            label: 'VULNERABILITY',
+                            backgroundColor: window.chartColors.yellow,
+                            data: []
+                    }]
+
+                    for (var i = 0; i < products.length; i++) {
+                        var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
+                        var val2= issues[i][6]+issues[i][7]+issues[i][8]+issues[i][9]+issues[i][10];
+                        var val3= issues[i][11]+issues[i][12]+issues[i][13]+issues[i][14]+issues[i][15];
+                        barChartData.datasets[0].data.push(val1);
+                        barChartData.datasets[1].data.push(val2);
+                        barChartData.datasets[2].data.push(val3);            
+                     }
+                
+                }else if(selectedWay==2){
+                    tit="Sonar Issues - Product Level - Type Wise";
+                    barChartData.labels=areas;                    
+                    barChartData.datasets=[{
+                        label: 'BLOCKER',
+                        backgroundColor: window.chartColors.red,
+                        data: []
+                        }, {
+                            label: 'CRITICAL',
+                            backgroundColor: window.chartColors.blue,
+                            data: []
+                        }, {
+                            label: 'MAJOR',
+                            backgroundColor: window.chartColors.yellow,
+                            data: []
+                        }, {
+                            label: 'MINOR',
+                            backgroundColor: window.chartColors.green,
+                            data: []
+                        }, {
+                            label: 'INFO',
+                            backgroundColor: window.chartColors.orange,
+                            data: []
+                    }];
+                    for (var i = 0; i < products.length; i++) {
+                        var val1= issues[i][1]+issues[i][6]+issues[i][11];
+                        var val2= issues[i][2]+issues[i][7]+issues[i][12];
+                        var val3= issues[i][3]+issues[i][8]+issues[i][13];
+                        var val4= issues[i][4]+issues[i][9]+issues[i][14];
+                        var val5= issues[i][5]+issues[i][10]+issues[i][15];
+                        barChartData.datasets[0].data.push(val1);
+                        barChartData.datasets[1].data.push(val2);
+                        barChartData.datasets[2].data.push(val3);
+                        barChartData.datasets[3].data.push(val4);
+                        barChartData.datasets[4].data.push(val5);             
+                     }
+                }
+                for (var i = 1; i < 16; i++) {
+                    var total=0;
+                    for (var j = 0; j < products.length; j++) {
+                        total=total+issues[j][i];
+                    }
+                    heatmap.series[0].data[i-1][2]=total;
+                    
+                }
+
+                Highcharts.chart('container',heatmap);
+                window.myBar.update();
                 document.getElementById("product").value=1;
                 document.getElementById("product").disabled=true;
             }  
@@ -335,19 +511,88 @@
 
         function getProduct(selectObject){
             var value=selectObject.value;
-            onclickProduct=value;
-            var labelarray=[];
-            var totals=[];
-            var colors = [];
-            for (var i = 0; i < issues[value][16].length; i++) {
-                for (var j = 0; j < 15; j++) {
-                    heatmap.series[0].data[j][2]=issues[value][j+1];
-                    
+            selectedProduct=tobeSelectedProducts[value-2]
+            if(value>1){
+                var numberOfComps = issues[selectedAreaNo][16][value-2][17].length;
+                var lbl=[];
+                lbl.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][1]);
+                for (var i = 0; i < numberOfComps-1; i++) {
+                    lbl.push(issues[selectedAreaNo][16][value-2][17][i].pk);
                 }
+                barChartData.labels=lbl;
+                if(selectedWay==1){
+                    barChartData.datasets=[{
+                            label: 'BUG',
+                            backgroundColor: window.chartColors.red,
+                            data: []
+                        }, {
+                            label: 'CODE SMELL',
+                            backgroundColor: window.chartColors.blue,
+                            data: []
+                        }, {
+                            label: 'VULNERABILITY',
+                            backgroundColor: window.chartColors.yellow,
+                            data: []
+                    }];
+                    barChartData.datasets[0].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][2]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][3]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][4]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][5]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][6]);
+                    barChartData.datasets[1].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][7]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][8]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][9]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][10]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][11]);
+                    barChartData.datasets[2].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][12]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][13]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][14]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][15]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][16]);
+
+                    for (var i = 0; i < numberOfComps-1; i++) {
+                        var val1=issues[selectedAreaNo][16][value-2][17][i].bb+issues[selectedAreaNo][16][value-2][17][i].cb+issues[selectedAreaNo][16][value-2][17][i].mab+issues[selectedAreaNo][16][value-2][17][i].mib+issues[selectedAreaNo][16][value-2][17][i].ib;
+                        var val2=issues[selectedAreaNo][16][value-2][17][i].bc+issues[selectedAreaNo][16][value-2][17][i].cc+issues[selectedAreaNo][16][value-2][17][i].mac+issues[selectedAreaNo][16][value-2][17][i].mic+issues[selectedAreaNo][16][value-2][17][i].ic;
+                        var val3=issues[selectedAreaNo][16][value-2][17][i].bv+issues[selectedAreaNo][16][value-2][17][i].cv+issues[selectedAreaNo][16][value-2][17][i].mav+issues[selectedAreaNo][16][value-2][17][i].miv+issues[selectedAreaNo][16][value-2][17][i].iv;
+                        barChartData.datasets[0].data.push(val1);
+                        barChartData.datasets[1].data.push(val2);
+                        barChartData.datasets[2].data.push(val3);
+                    }
+                }else if(selectedWay==2){
+                    barChartData.datasets=[{
+                        label: 'BLOCKER',
+                        backgroundColor: window.chartColors.red,
+                        data: []
+                        }, {
+                            label: 'CRITICAL',
+                            backgroundColor: window.chartColors.blue,
+                            data: []
+                        }, {
+                            label: 'MAJOR',
+                            backgroundColor: window.chartColors.yellow,
+                            data: []
+                        }, {
+                            label: 'MINOR',
+                            backgroundColor: window.chartColors.green,
+                            data: []
+                        }, {
+                            label: 'INFO',
+                            backgroundColor: window.chartColors.orange,
+                            data: []
+                    }];
+                    barChartData.datasets[0].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][2]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][7]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][12]);
+                    barChartData.datasets[1].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][3]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][8]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][13]);
+                    barChartData.datasets[2].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][4]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][9]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][14]);
+                    barChartData.datasets[3].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][5]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][10]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][15]);
+                    barChartData.datasets[4].data.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][6]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][11]+issues[selectedAreaNo][16][value-2][17][numberOfComps-1][16]);
+                    for (var i = 0; i < numberOfComps-1; i++) {
+                        var val1=issues[selectedAreaNo][16][value-2][17][i].bb+issues[selectedAreaNo][16][value-2][17][i].bc+issues[selectedAreaNo][16][value-2][17][i].bv;
+                        var val2=issues[selectedAreaNo][16][value-2][17][i].cb+issues[selectedAreaNo][16][value-2][17][i].cc+issues[selectedAreaNo][16][value-2][17][i].cv;
+                        var val3=issues[selectedAreaNo][16][value-2][17][i].mab+issues[selectedAreaNo][16][value-2][17][i].mac+issues[selectedAreaNo][16][value-2][17][i].mav;
+                        var val4=issues[selectedAreaNo][16][value-2][17][i].mib+issues[selectedAreaNo][16][value-2][17][i].mic+issues[selectedAreaNo][16][value-2][17][i].miv;
+                        var val5=issues[selectedAreaNo][16][value-2][17][i].ib+issues[selectedAreaNo][16][value-2][17][i].ic+issues[selectedAreaNo][16][value-2][17][i].iv;
+                        barChartData.datasets[0].data.push(val1);
+                        barChartData.datasets[1].data.push(val2);
+                        barChartData.datasets[2].data.push(val3);
+                        barChartData.datasets[3].data.push(val4);
+                        barChartData.datasets[4].data.push(val5);
+                    }
+
+                }
+            }else{
 
             }
 
             Highcharts.chart('container',heatmap);
+            window.myBar.update();
         }
 
         function getVersion(selectObject){
@@ -360,6 +605,7 @@
         function getWay(selectObject) {
             var value = selectObject.value;  
             if(value==1){
+                selectedWay=1;
                 barChartData.datasets=[{
                 label: 'BUG',
                 backgroundColor: window.chartColors.red,
@@ -384,6 +630,7 @@
              }
             
             }else if(value==2){
+                selectedWay=2;
                 barChartData.datasets=[{
                 label: 'BLOCKER',
                 backgroundColor: window.chartColors.red,
@@ -406,17 +653,17 @@
                 data: []
             }];
                 for (var i = 0; i < products.length; i++) {
-                var val1= issues[i][1]+issues[i][6]+issues[i][11];
-                var val2= issues[i][2]+issues[i][7]+issues[i][12];
-                var val3= issues[i][3]+issues[i][8]+issues[i][13];
-                var val4= issues[i][4]+issues[i][9]+issues[i][14];
-                var val5= issues[i][5]+issues[i][10]+issues[i][15];
-                barChartData.datasets[0].data.push(val1);
-                barChartData.datasets[1].data.push(val2);
-                barChartData.datasets[2].data.push(val3);
-                barChartData.datasets[3].data.push(val4);
-                barChartData.datasets[4].data.push(val5);             
-             }
+                    var val1= issues[i][1]+issues[i][6]+issues[i][11];
+                    var val2= issues[i][2]+issues[i][7]+issues[i][12];
+                    var val3= issues[i][3]+issues[i][8]+issues[i][13];
+                    var val4= issues[i][4]+issues[i][9]+issues[i][14];
+                    var val5= issues[i][5]+issues[i][10]+issues[i][15];
+                    barChartData.datasets[0].data.push(val1);
+                    barChartData.datasets[1].data.push(val2);
+                    barChartData.datasets[2].data.push(val3);
+                    barChartData.datasets[3].data.push(val4);
+                    barChartData.datasets[4].data.push(val5);             
+                }
             }
             window.myBar.update();
             
