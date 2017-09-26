@@ -1,11 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Sonar Issues</title>
     <script src="Chartjs/Chart.bundle.js"></script>
     <script src="Chartjs/samples/utils.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
@@ -26,7 +29,7 @@
     
     <div class="row">
         
-        <div class="col-xs-8"  style="padding-top:1px;">
+        <div class="col-xs-9"  style="padding-top:1px;">
             <div class="row" style="padding-top:1px;padding-bottom: 50px">
                 <div class="col-xs-4">
                     <h4>Area</h4>
@@ -43,42 +46,51 @@
                     </select>
                 </div>
                 <div class="col-xs-4">
-                    <h4>Version</h4>
+                    <h4>Category</h4>
+                    <select id="way" onchange="getWay(this)" class="form-control" style="width: 55%">
+                        <option value="1" selected="selected">Type</option>
+                        <option value="2">Severity</option>
+                    </select>
+                   <!-- <h4>Version</h4>
                     <select id="version" onchange="getVersion(this)" class="form-control" style="" disabled="true">
                         <option value="1" selected="selected">All</option>
                         <option value="2">1.0.0</option>
-                    </select>
+                    </select>-->
                 </div>
             </div>
-            <select id="way" onchange="getWay(this)" class="form-control" style="width: 20%">
-                <option value="1" selected="selected">Type</option>
-                <option value="2">Severity</option>
-            </select>
-
-            <div style="width: 94%">
+            <h3 id="title" style="text-align: center;"></h3>
+            <div class="card" style="width: 94%">
                 <canvas id="canvas"></canvas>
             </div>
         </div>
-        <div class="col-xs-4"  style="padding-top:150px;">  
-            <div id="container" style="margin: 0 auto"></div>
+        <div class="col-xs-3"  style="padding-top:150px;">  
+            <div id="container" style="margin: 0 auto;"></div>
         </div>
     </div> 
-    <div class="row">
+    <!--<div class="row">
         <div class="col-xs-8">Trend Line will come here</div>
         <div class="col-xs-4">
             
         </div>
-    </div> 
-</div> 
-    
+    </div> -->
+    <div class="card">
+  <div class="card-block">
+    This is some text within a card block.
+  </div>
+</div>
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
         var selectedProduct="";
         var selectedAreaNo;
         var selectedWay=1;
         var onclickProduct;
         var tobeSelectedProducts;
-        var selectedProduct;
-        
+        var selectedProductNo=0;
+        var selectAllProduct=false;
+                
         var areas=[];
         var pns=[];
         var products=[];
@@ -90,10 +102,10 @@
         var productComponent=[];
 
         $.ajax({
-            url:"https://10.100.4.8:8243/si/v1.0.0/getAllIssues",
+            url:"https://localhost:9092/sonarIssues/getAllIssues",
             beforeSend: function( xhr ){
                 xhr.setRequestHeader('Accept','application/json');
-                xhr.setRequestHeader('Authorization','Bearer e05164bb-0572-31bf-80f8-9bc9b7ff93c8');
+                //xhr.setRequestHeader('Authorization','Bearer e05164bb-0572-31bf-80f8-9bc9b7ff93c8');
         
             },
             async:false,
@@ -206,19 +218,18 @@
                 
         })
         
-        var tit="Sonar Issues";
         var barChartData = {
             labels: areas,
             datasets: [{
-                label: 'BUG',
+                label: 'BUGS',
                 backgroundColor: window.chartColors.red,
                 data: []
             }, {
-                label: 'CODE SMELL',
+                label: 'CODE SMELLS',
                 backgroundColor: window.chartColors.blue,
                 data: []
             }, {
-                label: 'VULNERABILITY',
+                label: 'VULNERABILITIES',
                 backgroundColor: window.chartColors.yellow,
                 data: []
             }],
@@ -229,15 +240,16 @@
 
             chart: {
                 type: 'heatmap',
-                marginTop: 40,
+                marginTop: 50,
                 marginBottom: 80,
-                plotBorderWidth: 1
+                plotBorderWidth: 1,
+                width: 449
             },
             title: {
-                text: 'Type and Severity'
+                text: 'Type Vs Severity - All Areas'
             },
             xAxis: {
-                categories: ['BUG', 'CODE SMELL', 'VULNERABILITY']
+                categories: ['BUGS', 'CODE SMELLS', 'VULNERABILITIES']
             },
             yAxis: {
                 categories: ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'INFO'],
@@ -259,7 +271,7 @@
             },
             tooltip: {
                 formatter: function () {
-                    return this.point.value + '</b><br><b>' + this.series.yAxis.categories[this.point.y] + '</b>  <b>' + this.series.xAxis.categories[this.point.x] + '</b>';
+                    return this.point.value + '</b><br><b>' + this.series.yAxis.categories[this.point.y] + '</b> - <b>' + this.series.xAxis.categories[this.point.x] + '</b>';
                 }
             },
             series: [{
@@ -279,6 +291,7 @@
         
 
         window.onload = function() {
+            document.getElementById("title").innerHTML="Sonar Issues - All Areas - Type Wise";
             var y = document.getElementById("area");
             for (var i = 0; i < areas.length; i++) {
                 var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
@@ -310,11 +323,6 @@
                 type: 'bar',
                 data: barChartData,
                 options: {
-                    title:{
-                        display:true,
-                        text:tit,
-                        fontSize:20
-                    },
                     tooltips: {
                         mode: 'index',
                         intersect: false
@@ -325,23 +333,23 @@
                             stacked: true,
                         }],
                         yAxes: [{
-                            stacked: true
+                            stacked: true,
                         }]
                     },
-                    beforeUpdate: function() {
-                        var chartOpts = this.chart.options; 
-                        if (chartOpts && chartOpts.title) {
-                            this.options = helpers.configMerge(Chart.defaults.global.title, chartOpts.title);
+                    layout: {
+                        padding: {
+                            left: 0,
+                            right:0
                         }
-                    },
+                    }
                 },
             });
 
         };
 
-        function getArea(selectObject){
-            var area = selectObject.value;
+        function setArea(area){
             if(area>1){
+                selectedProductNo=0;
                 selectedAreaNo=area-2;
                 var selectedArea = areas[area-2];
                 var ai=pns[area-2];
@@ -356,17 +364,17 @@
                     x.add(option);   
                 }
                 if(selectedWay==1){
-                    tit="Sonar Issues - Product Level - Type Wise";
+                    document.getElementById("title").innerHTML="Sonar Issues - "+selectedArea+" - Type Wise";
                     barChartData.datasets=[{
-                        label: 'BUG',
+                        label: 'BUGS',
                         backgroundColor: window.chartColors.red,
                         data: []
                     }, {
-                        label: 'CODE SMELL',
+                        label: 'CODE SMELLS',
                         backgroundColor: window.chartColors.blue,
                         data: []
                     }, {
-                        label: 'VULNERABILITY',
+                        label: 'VULNERABILITIES',
                         backgroundColor: window.chartColors.yellow,
                         data: []
                     }];
@@ -382,7 +390,7 @@
                     }
                     
                 }else if(selectedWay==2){
-                    tit="Sonar Issues - Product Level - Severity Wise";
+                    document.getElementById("title").innerHTML="Sonar Issues - "+selectedArea+" - Severity Wise";
                     barChartData.datasets=[{
                     label: 'BLOCKER',
                     backgroundColor: window.chartColors.red,
@@ -420,28 +428,44 @@
                     }
 
                 }
-                console.log(ai);
+                
                 for (var j = 0; j < 15; j++) {
                     heatmap.series[0].data[j][2]=issues[area-2][j+1];
                         
                 }
+                heatmap.title.text="Type Vs Severity - "+selectedArea;
                 Highcharts.chart('container',heatmap);
                 document.getElementById("product").disabled=false;
                 window.myBar.update();
+                if(!selectAllProduct){
+                    if(selectedProductNo==0){
+                        if(ai.length==1){
+                            document.getElementById("product").value=2;
+                            setProduct(2);
+                        }
+                    }
+
+                }
+                selectAllProduct=false;
+                selectedProductNo=0;
+                
             }else{
+                selectedAreaNo="All";
+                selectedProductNo=0;
                     if(selectedWay==1){
+                            document.getElementById("title").innerHTML="Sonar Issues - All Areas - Type Wise";
                             tit="Sonar Issues - Product Level - Type Wise";
                             barChartData.labels=areas; 
                             barChartData.datasets=[{
-                            label: 'BUG',
+                            label: 'BUGS',
                             backgroundColor: window.chartColors.red,
                             data: []
                         }, {
-                            label: 'CODE SMELL',
+                            label: 'CODE SMELLS',
                             backgroundColor: window.chartColors.blue,
                             data: []
                         }, {
-                            label: 'VULNERABILITY',
+                            label: 'VULNERABILITIES',
                             backgroundColor: window.chartColors.yellow,
                             data: []
                     }]
@@ -456,7 +480,7 @@
                      }
                 
                 }else if(selectedWay==2){
-                    tit="Sonar Issues - Product Level - Type Wise";
+                    document.getElementById("title").innerHTML="Sonar Issues - All Areas - Severity Wise";
                     barChartData.labels=areas;                    
                     barChartData.datasets=[{
                         label: 'BLOCKER',
@@ -500,19 +524,26 @@
                     heatmap.series[0].data[i-1][2]=total;
                     
                 }
-
+                heatmap.title.text="Type Vs Severity - All Areas";
                 Highcharts.chart('container',heatmap);
                 window.myBar.update();
                 document.getElementById("product").value=1;
                 document.getElementById("product").disabled=true;
+                selectedProductNo=0;
+                console.log("Yo selected All areas");
             }  
-            
+
         }
 
-        function getProduct(selectObject){
-            var value=selectObject.value;
-            selectedProduct=tobeSelectedProducts[value-2]
+        function getArea(selectObject){
+            var area = selectObject.value;
+            setArea(area);
+        }
+        function setProduct(value){
+            selectedProductNo=value;
+            selectedProduct=tobeSelectedProducts[value-2];
             if(value>1){
+                document.getElementById("title").innerHTML="Sonar Issues - "+selectedProduct+" - Type Wise";
                 var numberOfComps = issues[selectedAreaNo][16][value-2][17].length;
                 var lbl=[];
                 lbl.push(issues[selectedAreaNo][16][value-2][17][numberOfComps-1][1]);
@@ -522,15 +553,15 @@
                 barChartData.labels=lbl;
                 if(selectedWay==1){
                     barChartData.datasets=[{
-                            label: 'BUG',
+                            label: 'BUGS',
                             backgroundColor: window.chartColors.red,
                             data: []
                         }, {
-                            label: 'CODE SMELL',
+                            label: 'CODE SMELLS',
                             backgroundColor: window.chartColors.blue,
                             data: []
                         }, {
-                            label: 'VULNERABILITY',
+                            label: 'VULNERABILITIES',
                             backgroundColor: window.chartColors.yellow,
                             data: []
                     }];
@@ -547,6 +578,7 @@
                         barChartData.datasets[2].data.push(val3);
                     }
                 }else if(selectedWay==2){
+                    document.getElementById("title").innerHTML="Sonar Issues - "+selectedProduct+" - Severity Wise";
                     barChartData.datasets=[{
                         label: 'BLOCKER',
                         backgroundColor: window.chartColors.red,
@@ -587,86 +619,60 @@
                     }
 
                 }
-            }else{
+                var pcn;
+                for (var i = 0; i < productComponent.length; i++) {
+                    if(productComponent[i][1]==selectedProduct){
+                        pcn=i;
+                        break;
+                    }
+                }
 
+                for (var j = 0; j < 15; j++) {
+                    heatmap.series[0].data[j][2]=productComponent[pcn][j+2];
+                        
+                }
+                heatmap.title.text="Type Vs Severity - "+selectedProduct;
+                console.log("Yo selected a product");
+            }else{
+                selectedProductNo=1;
+                selectAllProduct=true;
+                setArea(selectedAreaNo+2);
+                console.log("Yo selected all products");
             }
 
             Highcharts.chart('container',heatmap);
             window.myBar.update();
         }
-
-        function getVersion(selectObject){
-            var version = selectObject.value;
-            if(version==1){
-                console.log(version);
-            }
+        function getProduct(selectObject){
+            var value=selectObject.value;
+            setProduct(value);
+            
         }
+
+        // function getVersion(selectObject){
+        //     var version = selectObject.value;
+        //     if(version==1){
+        //         console.log(version);
+        //     }
+        // }
 
         function getWay(selectObject) {
             var value = selectObject.value;  
+            
             if(value==1){
                 selectedWay=1;
-                barChartData.datasets=[{
-                label: 'BUG',
-                backgroundColor: window.chartColors.red,
-                data: []
-            }, {
-                label: 'CODE SMELL',
-                backgroundColor: window.chartColors.blue,
-                data: []
-            }, {
-                label: 'VULNERABILITY',
-                backgroundColor: window.chartColors.yellow,
-                data: []
-            }]
-
-            for (var i = 0; i < products.length; i++) {
-                var val1= issues[i][1]+issues[i][2]+issues[i][3]+issues[i][4]+issues[i][5];
-                var val2= issues[i][6]+issues[i][7]+issues[i][8]+issues[i][9]+issues[i][10];
-                var val3= issues[i][11]+issues[i][12]+issues[i][13]+issues[i][14]+issues[i][15];
-                barChartData.datasets[0].data.push(val1);
-                barChartData.datasets[1].data.push(val2);
-                barChartData.datasets[2].data.push(val3);            
-             }
-            
             }else if(value==2){
-                selectedWay=2;
-                barChartData.datasets=[{
-                label: 'BLOCKER',
-                backgroundColor: window.chartColors.red,
-                data: []
-            }, {
-                label: 'CRITICAL',
-                backgroundColor: window.chartColors.blue,
-                data: []
-            }, {
-                label: 'MAJOR',
-                backgroundColor: window.chartColors.yellow,
-                data: []
-            }, {
-                label: 'MINOR',
-                backgroundColor: window.chartColors.green,
-                data: []
-            }, {
-                label: 'INFO',
-                backgroundColor: window.chartColors.orange,
-                data: []
-            }];
-                for (var i = 0; i < products.length; i++) {
-                    var val1= issues[i][1]+issues[i][6]+issues[i][11];
-                    var val2= issues[i][2]+issues[i][7]+issues[i][12];
-                    var val3= issues[i][3]+issues[i][8]+issues[i][13];
-                    var val4= issues[i][4]+issues[i][9]+issues[i][14];
-                    var val5= issues[i][5]+issues[i][10]+issues[i][15];
-                    barChartData.datasets[0].data.push(val1);
-                    barChartData.datasets[1].data.push(val2);
-                    barChartData.datasets[2].data.push(val3);
-                    barChartData.datasets[3].data.push(val4);
-                    barChartData.datasets[4].data.push(val5);             
+                selectedWay=2;   
+            }
+            if(selectedAreaNo=="All"){
+                setArea(1);
+            }else{
+                if(selectedProductNo==0){
+                    setArea(selectedAreaNo+2);
+                }else{
+                    setProduct(selectedProductNo);
                 }
             }
-            window.myBar.update();
-            
         }
 
         canvas.onclick = function(evt){
